@@ -17,10 +17,6 @@ Unity Hub
  (recommended Unity version: 2022.x or newer).
 .NET SDK (included with Unity).
 
-Installation:
-git clone https://github.com/SkyrieS/bearly-shipped.git
-cd bearly-shipped
-
 This was made for a jam, but contributions are welcome for polishing or expanding:
 Fork the repo and create a new branch.
 Submit a pull request with your changes.
