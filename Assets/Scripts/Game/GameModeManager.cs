@@ -15,9 +15,13 @@ public class GameModeManager : MonoBehaviour
     [SerializeField] private DragController dragController;
     [SerializeField] private ShapeDrawer shapeDrawer;
 
+    public bool enableOnlyDragMode = false;
+
     [Header("UI Elements")]
     [SerializeField] private Image dragIcon;
+    [SerializeField] private CanvasGroup dragCanvas;
     [SerializeField] private Image drawIcon;
+    [SerializeField] private CanvasGroup drawCanvas;
     [SerializeField] private Button dragButton;
     [SerializeField] private Button drawButton;
 
@@ -52,9 +56,9 @@ public class GameModeManager : MonoBehaviour
     void Start()
     {
         if (dragController == null)
-            dragController = FindObjectOfType<DragController>();
+            dragController = FindFirstObjectByType<DragController>();
         if (shapeDrawer == null)
-            shapeDrawer = FindObjectOfType<ShapeDrawer>();
+            shapeDrawer = FindFirstObjectByType<ShapeDrawer>();
 
         if (dragButton != null)
             dragButton.onClick.AddListener(() => SwitchMode(GameMode.Drag));
@@ -66,12 +70,17 @@ public class GameModeManager : MonoBehaviour
 
     void Update()
     {
+        if (enableOnlyDragMode)
+            return;
+
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             SwitchMode(GameMode.Drag);
         }
         else if (Input.GetKeyDown(KeyCode.Alpha2))
         {
+            PopupManager.Instance.HidePopup("Draw");
+            PopupManager.Instance.ShowPopup("Draw shape", "Aim at the ground and draw a shape (remember to complete the shape)", 0f);
             SwitchMode(GameMode.Draw);
         }
     }
@@ -106,18 +115,18 @@ public class GameModeManager : MonoBehaviour
         if (currentMode == GameMode.Drag)
         {
             SetDragCursor();
-            dragIcon.color = new Color(dragIcon.color.r, dragIcon.color.g, dragIcon.color.b, activeAlpha);
-            drawIcon.color = new Color(drawIcon.color.r, drawIcon.color.g, drawIcon.color.b, inactiveAlpha);
+            dragCanvas.alpha = activeAlpha;
+            drawCanvas.alpha = inactiveAlpha;
             pulseCoroutine = StartCoroutine(Pulse(dragIcon.rectTransform));
-            if (drawIcon != null) drawIcon.rectTransform.localScale = Vector3.one;
+            if (drawIcon != null) drawIcon.rectTransform.localScale = new Vector3(pulseMinScale, pulseMinScale, pulseMinScale);
         }
-        else // Draw mode
+        else
         {
             SetDrawCursor();
-            drawIcon.color = new Color(drawIcon.color.r, drawIcon.color.g, drawIcon.color.b, activeAlpha);
-            dragIcon.color = new Color(dragIcon.color.r, dragIcon.color.g, dragIcon.color.b, inactiveAlpha);
+            drawCanvas.alpha = activeAlpha;
+            dragCanvas.alpha = inactiveAlpha;
             pulseCoroutine = StartCoroutine(Pulse(drawIcon.rectTransform));
-            if (dragIcon != null) dragIcon.rectTransform.localScale = Vector3.one;
+            if (dragIcon != null) dragIcon.rectTransform.localScale = new Vector3(pulseMinScale, pulseMinScale, pulseMinScale);
         }
     }
 

@@ -2009,7 +2009,7 @@ MonoBehaviour:
     m_Unicode: 65534
     m_GlyphIndex: 385
     m_Scale: 1
-    m_Name: tilemap_white_404
+    m_Name: up
   - m_ElementType: 2
     m_Unicode: 65534
     m_GlyphIndex: 386
@@ -2224,12 +2224,12 @@ MonoBehaviour:
     m_Unicode: 65534
     m_GlyphIndex: 428
     m_Scale: 1
-    m_Name: tilemap_white_447
+    m_Name: 76
   - m_ElementType: 2
     m_Unicode: 65534
     m_GlyphIndex: 429
     m_Scale: 1
-    m_Name: tilemap_white_448
+    m_Name: 8876
   - m_ElementType: 2
     m_Unicode: 65534
     m_GlyphIndex: 430
@@ -2244,22 +2244,22 @@ MonoBehaviour:
     m_Unicode: 65534
     m_GlyphIndex: 432
     m_Scale: 1
-    m_Name: tilemap_white_451
+    m_Name: up
   - m_ElementType: 2
     m_Unicode: 65534
     m_GlyphIndex: 433
     m_Scale: 1
-    m_Name: tilemap_white_452
+    m_Name: rigth
   - m_ElementType: 2
     m_Unicode: 65534
     m_GlyphIndex: 434
     m_Scale: 1
-    m_Name: tilemap_white_453
+    m_Name: down
   - m_ElementType: 2
     m_Unicode: 65534
     m_GlyphIndex: 435
     m_Scale: 1
-    m_Name: tilemap_white_454
+    m_Name: left
   - m_ElementType: 2
     m_Unicode: 65534
     m_GlyphIndex: 436
@@ -4220,6 +4220,11 @@ MonoBehaviour:
     m_GlyphIndex: 827
     m_Scale: 1
     m_Name: tilemap_white_829
+  - m_ElementType: 2
+    m_Unicode: 65534
+    m_GlyphIndex: 429
+    m_Scale: 1
+    m_Name: right
   m_GlyphTable:
   - m_Index: 0
     m_Metrics:

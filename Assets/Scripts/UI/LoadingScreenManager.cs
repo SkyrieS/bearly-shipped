@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,23 +9,28 @@ public class LoadingScreenManager : MonoBehaviour
     public static LoadingScreenManager Instance { get; private set; }
 
     [Tooltip("Assign loading screen canvas prefabs here (one per type)")]
-    public List<GameObject> loadingScreenObjects;
+    [SerializeField] private List<GameObject> loadingScreenObjects;
 
     [Header("Transition Elements")]
-    public Camera loadingCamera;
-    public Camera mainSceneCamera;
-    public CanvasGroup yellowFadeGroup;
-    public CanvasGroup clickTextGroup;
-    public List<GameObject> sceneManagers;
+    [SerializeField] private Camera loadingCamera;
+    [SerializeField] private AudioListener loadingListener;
+    [SerializeField] private Camera mainSceneCamera;
+    [SerializeField] private AudioListener mainSceneListener;
+    [SerializeField] private CanvasGroup yellowFadeGroup;
+    [SerializeField] private CanvasGroup clickTextGroup;
+    [SerializeField] private List<GameObject> sceneManagers;
+
+    public Camera MainSceneCamera { get => mainSceneCamera; set => mainSceneCamera = value; }
+    public AudioListener MainSceneListener { get => mainSceneListener; set => mainSceneListener = value; }
+    public List<GameObject> SceneManagers => sceneManagers;
+
+    [Tooltip("Fade duration in seconds")]
+    [SerializeField] private float fadeDuration = 0.7f;
 
     private GameObject currentLoadingScreen;
 
-    [Tooltip("Fade duration in seconds")]
-    public float fadeDuration = 0.7f;
-
-
     private bool waitingForClick = false;
-    private System.Action onContinueAction;
+    private Action onContinueAction;
 
     void Awake()
     {
@@ -55,7 +61,6 @@ public class LoadingScreenManager : MonoBehaviour
 
     private IEnumerator FinishAndLoadNextRoutine(string nextSceneName, string currentSceneName, int loadingScreenIndex, bool firstLoad = false)
     {
-        // Enable yellow fade
         if (firstLoad)
         {
             yellowFadeGroup.gameObject.SetActive(true);
@@ -67,16 +72,16 @@ public class LoadingScreenManager : MonoBehaviour
             yield return StartCoroutine(FadeCanvasGroup(yellowFadeGroup, 0f, 1f, fadeDuration));
         }
   
-        // Switch to loading camera
         if (mainSceneCamera != null) mainSceneCamera.enabled = false;
         if (loadingCamera != null) loadingCamera.enabled = true;
+        if (mainSceneListener != null) mainSceneListener.enabled = false;
+        if (loadingListener != null) loadingListener.enabled = true;
 
         SetManagersActive(false);
 
         currentLoadingScreen = loadingScreenObjects[loadingScreenIndex];
         currentLoadingScreen.SetActive(true);
 
-        // Fade out yellow
         if (yellowFadeGroup != null)
         {
             yield return StartCoroutine(FadeCanvasGroup(yellowFadeGroup, 1f, 0f, fadeDuration));
@@ -92,7 +97,6 @@ public class LoadingScreenManager : MonoBehaviour
             }
         }
 
-        // Load next scene
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(nextSceneName, LoadSceneMode.Additive);
         asyncLoad.allowSceneActivation = true;
         while (!asyncLoad.isDone)
@@ -101,18 +105,21 @@ public class LoadingScreenManager : MonoBehaviour
         }
         SceneManager.SetActiveScene(SceneManager.GetSceneByName(nextSceneName));
 
-        if (clickTextGroup != null)
+        if (nextSceneName != "FinishScene")
         {
             clickTextGroup.gameObject.SetActive(true);
             StartCoroutine(FadeCanvasGroup(clickTextGroup, 0f, 1f, 1f));
-        }
 
-        // Wait for click to continue
-        waitingForClick = true;
-        bool clicked = false;
-        onContinueAction = () => { clicked = true; };
-        while (!clicked) yield return null;
-        onContinueAction = null;
+            waitingForClick = true;
+            bool clicked = false;
+            onContinueAction = () => { clicked = true; };
+            while (!clicked) yield return null;
+            onContinueAction = null;
+        }
+        else
+        {
+            yield return new WaitForSeconds(5f);
+        }
 
         yellowFadeGroup.gameObject.SetActive(true);
         yield return StartCoroutine(FadeCanvasGroup(yellowFadeGroup, 0f, 1f, fadeDuration));
@@ -124,6 +131,8 @@ public class LoadingScreenManager : MonoBehaviour
 
         if (mainSceneCamera != null) mainSceneCamera.enabled = true;
         if (loadingCamera != null) loadingCamera.enabled = false;
+        if (mainSceneListener != null) mainSceneListener.enabled = true;
+        if (loadingListener != null) loadingListener.enabled = false;
 
         yield return StartCoroutine(FadeCanvasGroup(yellowFadeGroup, 1f, 0f, fadeDuration));
         yellowFadeGroup.gameObject.SetActive(false);

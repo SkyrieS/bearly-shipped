@@ -16,65 +16,70 @@ public class ShapeDrawer : MonoBehaviour
     [SerializeField] private RectTransform inkBar;
     [SerializeField] private RectTransform projectedInkBar;
 
-    private float currentInk;
-    private Material currentDrawMaterial;
-    private List<Vector3> points = new List<Vector3>();
-    private LineRenderer lineRenderer;
-    private Coroutine clearCoroutine;
-    private Plane drawingPlane = new Plane(Vector3.up, Vector3.zero);
+    [Header("Drawing Sound")]
+    [SerializeField] private AudioSource drawingAudioSource;
+    [SerializeField] private AudioClip drawingLoopClip;
 
-    void Awake()
+    private LineRenderer _lineRenderer;
+
+    private float _currentInk;
+    private Material _currentDrawMaterial;
+    private List<Vector3> _points = new List<Vector3>();
+    private Plane _drawingPlane = new Plane(Vector3.up, Vector3.zero);
+
+    private Coroutine _clearCoroutine;
+
+    private void Awake()
     {
-        lineRenderer = GetComponent<LineRenderer>();
-        lineRenderer.positionCount = 0;
-        currentInk = maxInk;
+        _lineRenderer = GetComponent<LineRenderer>();
+        _lineRenderer.positionCount = 0;
+        _currentInk = maxInk;
         UpdateInkBars(0f);
     }
 
-    void OnDisable()
+    private void OnDisable()
     {
-        // Clear drawing when the mode is switched
-        if (points.Count > 0)
+        if (_points.Count > 0)
         {
             StartColorAndClear(Color.red, 0f);
         }
     }
 
-    void Update()
+    private void Update()
     {
         if (Input.GetMouseButtonDown(0))
         {
-            points.Clear();
-            lineRenderer.positionCount = 0;
-            if (clearCoroutine != null)
+            _points.Clear();
+            _lineRenderer.positionCount = 0;
+            if (_clearCoroutine != null)
             {
-                StopCoroutine(clearCoroutine);
-                clearCoroutine = null;
+                StopCoroutine(_clearCoroutine);
+                _clearCoroutine = null;
             }
-            lineRenderer.startColor = Color.white;
-            lineRenderer.endColor = Color.white;
+            _lineRenderer.startColor = Color.white;
+            _lineRenderer.endColor = Color.white;
             UpdateInkBars(0f);
 
-            currentDrawMaterial = meshMaterials[Random.Range(0, meshMaterials.Count)];
-            lineRenderer.material = currentDrawMaterial;
+            _currentDrawMaterial = meshMaterials[Random.Range(0, meshMaterials.Count)];
+            _lineRenderer.material = _currentDrawMaterial;
 
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             if (Physics.Raycast(ray, out RaycastHit hit))
             {
-                drawingPlane = new Plane(Vector3.up, hit.point);
+                _drawingPlane = new Plane(Vector3.up, hit.point);
             }
             else
             {
-                drawingPlane = new Plane(Vector3.up, Vector3.zero);
+                _drawingPlane = new Plane(Vector3.up, Vector3.zero);
             }
         }
 
         if (Input.GetMouseButtonDown(1))
         {
-            points.Clear();
-            lineRenderer.positionCount = 0;
-            lineRenderer.startColor = Color.white;
-            lineRenderer.endColor = Color.white;
+            _points.Clear();
+            _lineRenderer.positionCount = 0;
+            _lineRenderer.startColor = Color.white;
+            _lineRenderer.endColor = Color.white;
             UpdateInkBars(0f);
             return;
         }
@@ -83,49 +88,55 @@ public class ShapeDrawer : MonoBehaviour
 
         if (Input.GetMouseButton(0))
         {
-            if (currentInk <= 0f)
+            if (_currentInk <= 0f)
+            {
                 return;
+            }
 
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             float enter;
             Vector3 worldPoint = Vector3.zero;
-            if (drawingPlane.Raycast(ray, out enter))
+            if (_drawingPlane.Raycast(ray, out enter))
             {
                 worldPoint = ray.GetPoint(enter);
 
                 float dist = 0f;
-                if (points.Count > 0)
-                    dist = Vector3.Distance(points[points.Count - 1], worldPoint);
+                if (_points.Count > 0)
+                    dist = Vector3.Distance(_points[_points.Count - 1], worldPoint);
 
-                projectedInk = GetShapeLengthWithExtra(points, worldPoint, false);
+                projectedInk = GetShapeLengthWithExtra(_points, worldPoint, false);
 
-                if (projectedInk > currentInk)
+                if (projectedInk > _currentInk)
                 {
-                    UpdateInkBars(currentInk);
+                    UpdateInkBars(_currentInk);
                     return;
                 }
 
-                if (points.Count == 0 || dist > updateDistanceThreshold)
+                if (_points.Count == 0 || dist > updateDistanceThreshold)
                 {
-                    points.Add(worldPoint);
-                    lineRenderer.positionCount = points.Count;
-                    lineRenderer.SetPositions(points.ToArray());
+                    _points.Add(worldPoint);
+                    _lineRenderer.positionCount = _points.Count;
+                    _lineRenderer.SetPositions(_points.ToArray());
                 }
                 UpdateInkBars(projectedInk);
             }
         }
 
-        if (Input.GetMouseButtonUp(0) && points.Count > 2)
+        if (Input.GetMouseButtonUp(0) && _points.Count > 2)
         {
-            float shapeLength = GetShapeLength(points, true);
-            if (Vector3.Distance(points[0], points[points.Count - 1]) < closeThreshold)
+            float shapeLength = GetShapeLength(_points, true);
+            if (Vector3.Distance(_points[0], _points[_points.Count - 1]) < closeThreshold)
             {
-                if (currentInk >= shapeLength)
+                if (_currentInk >= shapeLength)
                 {
-                    GenerateGeometryWithLibTess(points, 1f);
-                    currentInk -= shapeLength;
+                    GenerateGeometryWithLibTess(_points, 1f);
+                    _currentInk -= shapeLength;
                     UpdateInkBars(0f);
                     StartColorAndClear(Color.green, 0f);
+                    StartDrawingSound();
+                    PopupManager.Instance.HidePopup("Draw shape");
+                    PopupManager.Instance.ShowPopup("Drag shape", "You can also move shapes in Drag mode", 5f);
+
                 }
                 else
                 {
@@ -138,6 +149,15 @@ public class ShapeDrawer : MonoBehaviour
                 UpdateInkBars(0f);
                 StartColorAndClear(Color.red, 1f);
             }
+        }
+    }
+
+    private void StartDrawingSound()
+    {
+        if (drawingAudioSource != null && drawingLoopClip != null && !drawingAudioSource.isPlaying)
+        {
+            drawingAudioSource.clip = drawingLoopClip;
+            drawingAudioSource.Play();
         }
     }
 
@@ -163,7 +183,7 @@ public class ShapeDrawer : MonoBehaviour
 
     private void UpdateInkBars(float projectedInk)
     {
-        float ratio = Mathf.Clamp01(currentInk / maxInk);
+        float ratio = Mathf.Clamp01(_currentInk / maxInk);
         inkBar.localScale = new Vector3(ratio, 1f, 1f);
 
         if (ratio == 0)
@@ -178,21 +198,21 @@ public class ShapeDrawer : MonoBehaviour
 
     private void StartColorAndClear(Color color, float delay)
     {
-        if (clearCoroutine != null)
-            StopCoroutine(clearCoroutine);
-        clearCoroutine = StartCoroutine(ColorAndClearRoutine(color, delay));
+        if (_clearCoroutine != null)
+            StopCoroutine(_clearCoroutine);
+        _clearCoroutine = StartCoroutine(ColorAndClearRoutine(color, delay));
     }
 
     private IEnumerator ColorAndClearRoutine(Color color, float delay)
     {
-        lineRenderer.startColor = color;
-        lineRenderer.endColor = color;
+        _lineRenderer.startColor = color;
+        _lineRenderer.endColor = color;
         yield return new WaitForSeconds(delay);
-        lineRenderer.positionCount = 0;
-        points.Clear();
-        lineRenderer.startColor = Color.white;
-        lineRenderer.endColor = Color.white;
-        clearCoroutine = null;
+        _lineRenderer.positionCount = 0;
+        _points.Clear();
+        _lineRenderer.startColor = Color.white;
+        _lineRenderer.endColor = Color.white;
+        _clearCoroutine = null;
         UpdateInkBars(0f);
     }
 
@@ -347,8 +367,9 @@ public class ShapeDrawer : MonoBehaviour
         mesh.triangles = allTris;
 
         GameObject meshObj = new GameObject("DrawnMesh", typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider), typeof(Rigidbody), typeof(DraggableShape));
+        meshObj.layer = LayerMask.NameToLayer("Terrain");
         meshObj.GetComponent<MeshFilter>().mesh = mesh;
-        meshObj.GetComponent<MeshRenderer>().material = currentDrawMaterial;
+        meshObj.GetComponent<MeshRenderer>().material = _currentDrawMaterial;
 
         var meshCollider = meshObj.GetComponent<MeshCollider>();
         meshCollider.sharedMesh = mesh;

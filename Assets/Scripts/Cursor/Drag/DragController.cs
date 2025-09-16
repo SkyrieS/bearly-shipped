@@ -2,8 +2,25 @@ using UnityEngine;
 
 public class DragController : MonoBehaviour
 {
+    public string HintToStart = "Drag flag to guide the animals";
+    public string HintType = "Flag";
+
+    public bool enableFlagDrag = true;
+    public bool enableAnimalDrag = true;
+    public bool enableShapeDrag = true;
+
     private IDragMode currentMode;
     public Camera mainCamera;
+
+    [Header("Drag Sounds")]
+    public AudioSource audioSource;
+    public AudioClip pickSound;
+    public AudioClip releaseSound;
+
+    void Start()
+    {
+        PopupManager.Instance.ShowPopup(HintType, HintToStart, 0f);
+    }
 
     void OnDisable()
     {
@@ -15,6 +32,8 @@ public class DragController : MonoBehaviour
         if (currentMode != null && currentMode.IsDragging)
         {
             GameModeManager.Instance.SetDragCursor();
+            if (audioSource != null && releaseSound != null)
+                audioSource.PlayOneShot(releaseSound);
             currentMode.EndDrag();
             currentMode = null;
         }
@@ -26,6 +45,8 @@ public class DragController : MonoBehaviour
         {
             if (currentMode != null && currentMode.IsDragging)
             {
+                if (audioSource != null && releaseSound != null)
+                    audioSource.PlayOneShot(releaseSound);
                 currentMode.EndDrag();
                 currentMode = null;
             }
@@ -40,17 +61,19 @@ public class DragController : MonoBehaviour
                 var target = hit.collider.gameObject;
                 if (target != null)
                 {
-                    if (target.GetComponent<Animal>() != null)
+                    if (enableAnimalDrag && target.GetComponent<Animal>() != null)
                         currentMode = new AnimalDragMode();
-                    else if (target.GetComponent<DraggableShape>() != null)
+                    else if (enableShapeDrag && target.GetComponent<DraggableShape>() != null)
                         currentMode = new ShapeDragMode();
-                    else if (target.GetComponent<Flag>() != null)
+                    else if (enableFlagDrag && target.GetComponent<Flag>() != null)
                         currentMode = new FlagDragMode();
 
                     if (currentMode != null)
                     {
                         GameModeManager.Instance.SetAnimalDragCursor();
                         currentMode.BeginDrag(target, mainCamera);
+                        if (audioSource != null && pickSound != null)
+                            audioSource.PlayOneShot(pickSound);
                     }
                 }
             }
@@ -64,6 +87,8 @@ public class DragController : MonoBehaviour
         if (Input.GetMouseButtonUp(0) && currentMode != null && currentMode.IsDragging)
         {
             GameModeManager.Instance.SetDragCursor();
+            if (audioSource != null && releaseSound != null)
+                audioSource.PlayOneShot(releaseSound);
             currentMode.EndDrag();
             currentMode = null;
         }

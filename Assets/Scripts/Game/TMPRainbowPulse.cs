@@ -8,6 +8,7 @@ public class TMPRainbowPulse : MonoBehaviour
     public float pulseSpeed = 2f;
     public float pulseAmount = 10f;
     public bool affectChildren = false;
+    public bool onlyPulse = false;
 
     private TMP_Text tmpText;
     private float baseFontSize;
@@ -27,13 +28,17 @@ public class TMPRainbowPulse : MonoBehaviour
 
     void Update()
     {
-        if (tmpText == null) return;
-        tmpText.ForceMeshUpdate();
-        var textInfo = tmpText.textInfo;
-        float time = Time.time * rainbowSpeed;
-        float hue = Mathf.Repeat(time + rainbowSpread, 1f);
-        Color32 color = Color.HSVToRGB(hue, 1f, 1f);
+        if (tmpText == null) 
+            return;
+
+        if (!onlyPulse)
+        {
+            float time = Time.time * rainbowSpeed;
+            float hue = Mathf.Repeat(time + rainbowSpread, 1f);
+            Color32 color = Color.HSVToRGB(hue, 1f, 1f);
+            tmpText.color = color;
+        }
+
         tmpText.fontSize = baseFontSize + Mathf.Sin(Time.time * pulseSpeed) * pulseAmount;
-        tmpText.color = color;
     }
 }

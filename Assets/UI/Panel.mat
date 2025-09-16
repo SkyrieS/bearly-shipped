@@ -62,7 +62,7 @@ Material:
     - _Noise:
         m_Texture: {fileID: 2800000, guid: 75b254a55f7e3f347ac8f2b5db9b11d9, type: 3}
         m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 1, y: 1.5}
+        m_Offset: {x: 1, y: 1}
     - _OcclusionMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -74,7 +74,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _AlphaCutoff: 0.5
-    - _Amount: 0.05
+    - _Amount: 0.02
     - _AmountVertex: 0
     - _BumpScale: 1
     - _COLOR_SHIFTING: 1

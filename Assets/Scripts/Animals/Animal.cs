@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -8,6 +9,16 @@ public class Animal : MonoBehaviour
     [SerializeField] private Transform holdPoint;
     public Transform HoldPoint => holdPoint;
     public Rigidbody Rigidbody => GetComponent<Rigidbody>();
+
+    [Header("Effects")]
+    [SerializeField] private AudioClip disableSound;
+    [SerializeField] private ParticleSystem disableParticles;
+    [SerializeField] private AudioSource audioSource;
+
+    [Header("Truck Entry")]
+    [SerializeField] private Vector3 truckFrontOffset = new Vector3(0, 0, -0.7f);
+    [SerializeField] private float moveToFrontDuration = 0.3f;
+    [SerializeField] private float moveIntoTruckDuration = 0.5f;
 
     private readonly List<string> animationList = new List<string> { "Idle_A", "Idle_B", "Idle_C" };
 
@@ -30,6 +41,7 @@ public class Animal : MonoBehaviour
 
     public void OnEndDrag()
     {
+        PopupManager.Instance.HidePopup("Animals");
         isPicked = false;
         Rigidbody.useGravity = true;
     }
@@ -78,26 +90,42 @@ public class Animal : MonoBehaviour
         StartCoroutine(EnterTruckSequence(targetPosition));
     }
 
-    private System.Collections.IEnumerator EnterTruckSequence(Vector3 targetPosition)
+    private IEnumerator EnterTruckSequence(Vector3 targetPosition)
     {
-        // Disable physics interactions
-        Rigidbody.isKinematic = false;
+        isPicked = true;
 
-        // Animate towards the truck
-        float duration = 0.5f;
-        float elapsed = 0f;
+        Vector3 frontPosition = targetPosition + truckFrontOffset;
+        float t = 0f;
         Vector3 startPosition = transform.position;
-
-        while (elapsed < duration)
+        while (t < moveToFrontDuration)
         {
-            transform.position = Vector3.Lerp(startPosition, targetPosition, elapsed / duration);
-            elapsed += Time.deltaTime;
+            transform.position = Vector3.Lerp(startPosition, frontPosition, t / moveToFrontDuration);
+            t += Time.deltaTime;
             yield return null;
         }
+        transform.position = frontPosition;
 
+        t = 0f;
+        while (t < moveIntoTruckDuration)
+        {
+            transform.position = Vector3.Lerp(frontPosition, targetPosition, t / moveIntoTruckDuration);
+            t += Time.deltaTime;
+            yield return null;
+        }
         Rigidbody.position = targetPosition;
 
-        // Disable the animal
+        if (disableSound != null)
+        {
+            if (audioSource != null)
+                audioSource.PlayOneShot(disableSound);
+            else
+                AudioSource.PlayClipAtPoint(disableSound, transform.position);
+        }
+        if (disableParticles != null)
+        {
+            disableParticles.Play();
+        }
+
         gameObject.SetActive(false);
     }
 }

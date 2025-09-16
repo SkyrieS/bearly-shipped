@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+//This class is not very well optimized and cleaned, clean it up after the jam
 public class FinishSceneController : MonoBehaviour
 {
     [Header("Truck and Gift")]
@@ -33,9 +34,8 @@ public class FinishSceneController : MonoBehaviour
     public Transform happyBirthdayText;
     public float textPopDuration = 0.7f;
     private Vector3 textOriginalScale;
-    private BoxCollider happyBirthdayCollider;
-    public Vector3 textStartOffset = new Vector3(0, 0.2f, 0); // Offset inside box
-    public Vector3 textEndOffset = new Vector3(0, 1.2f, 0);   // Offset above box
+    public Vector3 textStartOffset = new Vector3(0, 0.2f, 0);
+    public Vector3 textEndOffset = new Vector3(0, 1.2f, 0);
     private Vector3 textStartPos;
     private Vector3 textEndPos;
     public AnimationCurve textScaleCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
@@ -47,16 +47,13 @@ public class FinishSceneController : MonoBehaviour
     public float presentDropDuration = 0.7f;
 
     [Header("Hint")]
-    public Transform hintText; // Assign a TextMeshPro or TextMeshProUGUI object in the inspector
+    public Transform hintText;
     public Vector3 hintOffset = new Vector3(0, 1.5f, 0);
 
     private bool liftActive = false;
     private bool confettiThrown = false;
-    private float liftTargetY;
 
     private Rigidbody giftLiftRb;
-    private Collider giftLiftCollider;
-    private bool isDraggingLift = false;
     public float liftForce = 20f;
     public float extraLiftForce = 100f;
     public float liftRaycastDistance = 10f;
@@ -71,9 +68,11 @@ public class FinishSceneController : MonoBehaviour
     public int animalsPerBurst = 2;
     public float animalDeactivateDelay = 3f;
 
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip popupClip;
+
     void Awake()
     {
-        // Create animal pool
         for (int i = 0; i < poolSize; i++)
         {
             GameObject prefab = animalPrefabs[Random.Range(0, animalPrefabs.Count)];
@@ -82,7 +81,7 @@ public class FinishSceneController : MonoBehaviour
             animalPool.Enqueue(animal);
         }
         gameObject.SetActive(false);
-        LoadingScreenManager.Instance.sceneManagers.Add(this.gameObject);
+        LoadingScreenManager.Instance.SceneManagers.Add(this.gameObject);
     }
 
     void Start()
@@ -90,18 +89,10 @@ public class FinishSceneController : MonoBehaviour
         exitButtonGroup.SetActive(false);
         exitButton.onClick.AddListener(OnExitButtonClicked);
         giftLiftRb = giftLift.GetComponent<Rigidbody>();
-        // Get any collider on the giftLift
-        // Setup 3D text
         if (happyBirthdayText != null)
         {
             textOriginalScale = happyBirthdayText.localScale;
             happyBirthdayText.localScale = Vector3.zero;
-            happyBirthdayCollider = happyBirthdayText.GetComponent<BoxCollider>();
-            if (happyBirthdayCollider == null)
-            {
-                happyBirthdayCollider = happyBirthdayText.gameObject.AddComponent<BoxCollider>();
-            }
-            // Set start and end positions relative to the gift
             textStartPos = gift.transform.position + textStartOffset;
             textEndPos = gift.transform.position + textEndOffset;
             happyBirthdayText.position = textStartPos;
@@ -112,10 +103,8 @@ public class FinishSceneController : MonoBehaviour
 
     IEnumerator PlaySequence()
     {
-        // Move truck
         truck.transform.position = truckStart.position;
         float t = 0;
-        // Start gift drop after delay, in parallel
         StartCoroutine(GiftDropAfterDelay(giftDropDelay));
         while (t < truckMoveDuration)
         {
@@ -129,7 +118,6 @@ public class FinishSceneController : MonoBehaviour
     IEnumerator GiftDropAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
-        // Drop gift animation
         Vector3 dropStart = gift.transform.position + Vector3.up * presentDropHeight;
         Vector3 dropEnd = gift.transform.position;
         gift.transform.position = dropStart;
@@ -144,7 +132,6 @@ public class FinishSceneController : MonoBehaviour
         }
         gift.transform.position = dropEnd;
 
-        // Enable lift and show hint
         liftActive = true;
         if (hintText != null)
         {
@@ -192,8 +179,11 @@ public class FinishSceneController : MonoBehaviour
         {
             for (int i = 0; i < animalsPerBurst && emitted < poolSize; i++)
             {
+                audioSource.clip = popupClip;
                 if (animalPool.Count > 0)
                 {
+                    audioSource.Play();
+
                     GameObject animal = animalPool.Dequeue();
                     animal.transform.position = confettiOrigin.position;
                     animal.SetActive(true);
@@ -213,13 +203,11 @@ public class FinishSceneController : MonoBehaviour
         StartCoroutine(ShowHappyBirthday());
     }
 
-    IEnumerator ShowHappyBirthday()
+    private IEnumerator ShowHappyBirthday()
     {
-        // Show and animate 3D text from inside the box
         if (happyBirthdayText != null)
         {
             happyBirthdayText.gameObject.SetActive(true);
-            // Phase 1: Move up while small
             float t = 0;
             Vector3 smallScale = textOriginalScale * textSmallScale;
             while (t < textMoveDuration)
@@ -232,7 +220,6 @@ public class FinishSceneController : MonoBehaviour
             }
             happyBirthdayText.position = textEndPos;
             happyBirthdayText.localScale = smallScale;
-            // Phase 2: Scale up at final position with curve
             t = 0;
             while (t < textPopDuration)
             {
@@ -244,7 +231,6 @@ public class FinishSceneController : MonoBehaviour
             }
             happyBirthdayText.localScale = textOriginalScale;
         }
-        // Wait for exit button group
         yield return new WaitForSeconds(exitButtonDelay);
         exitButtonGroup.SetActive(true);
     }

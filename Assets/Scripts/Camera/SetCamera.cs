@@ -6,7 +6,8 @@ public class SetCamera : MonoBehaviour
     {
         if (LoadingScreenManager.Instance != null)
         {
-            LoadingScreenManager.Instance.mainSceneCamera = gameObject.GetComponent<Camera>();
+            LoadingScreenManager.Instance.MainSceneCamera = gameObject.GetComponent<Camera>();
+            LoadingScreenManager.Instance.MainSceneListener = gameObject.GetComponent<AudioListener>();
         }
     }
 }

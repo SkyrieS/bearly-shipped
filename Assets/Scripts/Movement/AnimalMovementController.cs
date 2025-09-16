@@ -43,15 +43,8 @@ public class AnimalMovementController : MonoBehaviour
         rigidbodyToAnimal.Clear();
         animalReachedState.Clear();
 
-        // Find all objects implementing IAnimal in the scene
-        var animals = new List<Animal>();
-        foreach (var mb in Object.FindObjectsOfType<MonoBehaviour>())
-        {
-            if (mb is Animal animal)
-                animals.Add(animal);
-        }
+        var animals = FindObjectsByType<Animal>(FindObjectsSortMode.None);
 
-        // Sort animals by distance to the target
         List<Rigidbody> sortedAnimals = new List<Rigidbody>();
         foreach (var animal in animals)
         {
@@ -69,13 +62,10 @@ public class AnimalMovementController : MonoBehaviour
         int animalCount = sortedAnimals.Count;
         if (animalCount == 0) return;
 
-        // Define positions: center, inner ring, outer ring
         List<Vector3> stopPoints = new List<Vector3>();
 
-        // 1. Center
         stopPoints.Add(target.position);
 
-        // 2. Inner ring (positions 2-5)
         int innerRingCount = Mathf.Min(4, animalCount - 1);
         float innerRadius = stopRadius * 0.5f;
         for (int i = 0; i < innerRingCount; i++)
@@ -88,7 +78,6 @@ public class AnimalMovementController : MonoBehaviour
             ));
         }
 
-        // 3. Outer ring (positions 6+)
         int outerRingCount = animalCount - 1 - innerRingCount;
         for (int i = 0; i < outerRingCount; i++)
         {
@@ -100,7 +89,6 @@ public class AnimalMovementController : MonoBehaviour
             ));
         }
 
-        // Assign stop points to animals by sorted distance
         for (int i = 0; i < animalCount; i++)
         {
             Rigidbody animalRb = sortedAnimals[i];
@@ -111,7 +99,6 @@ public class AnimalMovementController : MonoBehaviour
             
             if (teleport)
             {
-                // --- Teleport animal to starting position and rotation ---
                 animalRb.position = stopPoint;
                 animalStartPoints[animalRb] = stopPoint;
             }
@@ -121,8 +108,6 @@ public class AnimalMovementController : MonoBehaviour
 
     private void FixedUpdate()
     {
-
-        // Move each animal towards its assigned stop point
         foreach (Rigidbody animalRb in animalRigidbodies)
         {
             if (animalRb == null)
@@ -135,6 +120,7 @@ public class AnimalMovementController : MonoBehaviour
                     animalRb.position = resetPosition;
                     animalRb.linearVelocity = Vector3.zero;
                     animalRb.angularVelocity = Vector3.zero;
+                    PopupManager.Instance.ShowPopup("Fall animal" , "Animals that have fallen off the map return to their starting position", 5f);
                 }
                 continue;
             }
@@ -179,7 +165,6 @@ public class AnimalMovementController : MonoBehaviour
 
         Vector3 direction = toStopPoint.normalized;
 
-        // Rotate the animal towards the stop point (Y axis only)
         Vector3 directionXZ = new Vector3(direction.x, 0f, direction.z);
         if (directionXZ.sqrMagnitude > 0.0001f)
         {
@@ -187,7 +172,6 @@ public class AnimalMovementController : MonoBehaviour
             animalRb.rotation = Quaternion.Slerp(animalRb.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime);
         }
 
-        // Move the animal forward
         animalRb.MovePosition(animalRb.position + direction * moveSpeed * Time.fixedDeltaTime);
     }
 

@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class Flag : MonoBehaviour
@@ -8,8 +9,12 @@ public class Flag : MonoBehaviour
 
     private GameObject ghostInstance;
 
+    private bool hasShownPopup = false;
+
+
     public void OnBeginDrag()
     {
+
         ghostInstance = Instantiate(ghostPrefab, transform.position, Quaternion.identity);
         ghostInstance.SetActive(true);
     }
@@ -25,6 +30,12 @@ public class Flag : MonoBehaviour
 
     public void OnEndDrag()
     {
+        PopupManager.Instance.HidePopup("Flag");
+        if(!hasShownPopup)
+        {
+            StartCoroutine(ShowPopup(2f));
+        }
+
         transform.position = ghostInstance.transform.position;
         Destroy(ghostInstance);
 
@@ -32,5 +43,12 @@ public class Flag : MonoBehaviour
         {
             movementController.RecalculateStopPoints();
         }
+    }
+
+    IEnumerator ShowPopup(float delay)
+    {
+        hasShownPopup = true;
+        yield return new WaitForSeconds(delay);
+        PopupManager.Instance.ShowPopup("End truck", "Lead animals to the truck", 0f);
     }
 }

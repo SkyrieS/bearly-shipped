@@ -1,6 +1,6 @@
-using UnityEngine;
-using TMPro;
 using System.Collections;
+using TMPro;
+using UnityEngine;
 
 public class EndZoneManager : MonoBehaviour
 {
@@ -14,11 +14,14 @@ public class EndZoneManager : MonoBehaviour
     [SerializeField] private int loadScreenIndex;
 
     [Header("Truck Animation")]
-    [SerializeField] private GameObject truck; // Assign the truck GameObject
-    [SerializeField] private Animator truckDoorAnimator; // Assign if using Animator for door
-    [SerializeField] private Transform truckMoveEndPoint; // Where the truck should move after closing
+    [SerializeField] private GameObject truck;
+    [SerializeField] private Animator truckDoorAnimator;
+    [SerializeField] private Transform truckMoveEndPoint;
+    [SerializeField] private AudioSource audioSource;
+
     [SerializeField] private float truckMoveDuration = 2f;
-    [SerializeField] private string truckDoorCloseTrigger = "Close"; // Animator trigger name
+    [SerializeField] private string truckDoorCloseTrigger = "Close";
+
 
     private int score = 0;
     private int totalAnimals;
@@ -26,20 +29,9 @@ public class EndZoneManager : MonoBehaviour
 
     private void Awake()
     {
-        // Find all animals to get the total count
-        var animals = FindObjectsOfType<Animal>();
+        var animals = FindObjectsByType<Animal>(FindObjectsSortMode.None);
         totalAnimals = animals.Length;
         UpdateScoreText();
-
-        if (animalMovementController == null)
-        {
-            animalMovementController = FindObjectOfType<AnimalMovementController>();
-        }
-
-        if (dragController == null)
-        {
-            dragController = FindObjectOfType<DragController>();
-        }
     }
 
     private void OnTriggerEnter(Collider other)
@@ -47,6 +39,8 @@ public class EndZoneManager : MonoBehaviour
         var animal = other.GetComponent<Animal>();
         if (animal != null && !animal.IsEnteringTruck())
         {
+            PopupManager.Instance.HidePopup("End truck");
+
             score++;
             UpdateScoreText();
 
@@ -82,14 +76,15 @@ public class EndZoneManager : MonoBehaviour
 
     private IEnumerator CloseTruckAndMoveForward()
     {
-        // Close the truck door (if animator is assigned)
+        audioSource.Play();
+
+        yield return new WaitForSeconds(0.5f);
+
         if (truckDoorAnimator != null)
         {
             truckDoorAnimator.SetTrigger(truckDoorCloseTrigger);
-            // Wait for door close animation (assume 1s, adjust as needed)
             yield return new WaitForSeconds(2f);
         }
-        // Move the truck forward
         if (truck != null && truckMoveEndPoint != null)
         {
             Vector3 start = truck.transform.position;
@@ -98,13 +93,25 @@ public class EndZoneManager : MonoBehaviour
             while (t < truckMoveDuration)
             {
                 float normalized = t / truckMoveDuration;
-                float eased = normalized * normalized; // Ease-in (acceleration)
+                float eased = normalized * normalized;
                 truck.transform.position = Vector3.Lerp(start, end, eased);
                 t += Time.deltaTime;
                 yield return null;
             }
             truck.transform.position = end;
         }
+        StartCoroutine(StopAudio());
         LoadingScreenManager.Instance.FinishAndLoadNext(sceneToLoad, currentScene, loadScreenIndex);
+    }
+
+    private IEnumerator StopAudio()
+    {
+        float t = 0f;
+        while (t < 3)
+        {
+            audioSource.volume = Mathf.Lerp(1f, 0, t);
+            t += Time.deltaTime;
+            yield return null;
+        }
     }
 }
