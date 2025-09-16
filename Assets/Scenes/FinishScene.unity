@@ -22737,7 +22737,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Happy Birthday
+  m_text: Congratulation!
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 26447ae89fe66d844b5a7c373ccca536, type: 2}
   m_sharedMaterial: {fileID: 8087315035536469099, guid: 18c6452698f11db46b61353b81654bf1, type: 2}

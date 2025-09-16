@@ -30,8 +30,8 @@ public class FinishSceneController : MonoBehaviour
     public float exitButtonDelay = 5f;
     public Button exitButton;
 
-    [Header("3D Happy Birthday Text")]
-    public Transform happyBirthdayText;
+    [Header("3D Congratulation Text")]
+    public Transform congratulationText;
     public float textPopDuration = 0.7f;
     private Vector3 textOriginalScale;
     public Vector3 textStartOffset = new Vector3(0, 0.2f, 0);
@@ -89,14 +89,14 @@ public class FinishSceneController : MonoBehaviour
         exitButtonGroup.SetActive(false);
         exitButton.onClick.AddListener(OnExitButtonClicked);
         giftLiftRb = giftLift.GetComponent<Rigidbody>();
-        if (happyBirthdayText != null)
+        if (congratulationText != null)
         {
-            textOriginalScale = happyBirthdayText.localScale;
-            happyBirthdayText.localScale = Vector3.zero;
+            textOriginalScale = congratulationText.localScale;
+            congratulationText.localScale = Vector3.zero;
             textStartPos = gift.transform.position + textStartOffset;
             textEndPos = gift.transform.position + textEndOffset;
-            happyBirthdayText.position = textStartPos;
-            happyBirthdayText.gameObject.SetActive(false);
+            congratulationText.position = textStartPos;
+            congratulationText.gameObject.SetActive(false);
         }
         StartCoroutine(PlaySequence());
     }
@@ -200,36 +200,36 @@ public class FinishSceneController : MonoBehaviour
             }
             yield return new WaitForSeconds(emitInterval);
         }
-        StartCoroutine(ShowHappyBirthday());
+        StartCoroutine(ShowCongratulationText());
     }
 
-    private IEnumerator ShowHappyBirthday()
+    private IEnumerator ShowCongratulationText()
     {
-        if (happyBirthdayText != null)
+        if (congratulationText != null)
         {
-            happyBirthdayText.gameObject.SetActive(true);
+            congratulationText.gameObject.SetActive(true);
             float t = 0;
             Vector3 smallScale = textOriginalScale * textSmallScale;
             while (t < textMoveDuration)
             {
                 float lerp = t / textMoveDuration;
-                happyBirthdayText.localScale = smallScale;
-                happyBirthdayText.position = Vector3.Lerp(textStartPos, textEndPos, lerp);
+                congratulationText.localScale = smallScale;
+                congratulationText.position = Vector3.Lerp(textStartPos, textEndPos, lerp);
                 t += Time.deltaTime;
                 yield return null;
             }
-            happyBirthdayText.position = textEndPos;
-            happyBirthdayText.localScale = smallScale;
+            congratulationText.position = textEndPos;
+            congratulationText.localScale = smallScale;
             t = 0;
             while (t < textPopDuration)
             {
                 float lerp = t / textPopDuration;
                 float curveValue = textScaleCurve.Evaluate(lerp);
-                happyBirthdayText.localScale = Vector3.LerpUnclamped(smallScale, textOriginalScale, curveValue);
+                congratulationText.localScale = Vector3.LerpUnclamped(smallScale, textOriginalScale, curveValue);
                 t += Time.deltaTime;
                 yield return null;
             }
-            happyBirthdayText.localScale = textOriginalScale;
+            congratulationText.localScale = textOriginalScale;
         }
         yield return new WaitForSeconds(exitButtonDelay);
         exitButtonGroup.SetActive(true);
